@@ -1,5 +1,5 @@
 
-clear; format short; clc; %close all;
+clear; format short; clc; close all;
 
 dbstop if error
 
@@ -20,19 +20,20 @@ for k= 1:N_IMU-1
         PX(7,7)= sig_phi0^2;
         PX(8,8)= sig_phi0^2;
         PX(9,9)= sig_yaw0^2;
+        u= u - XX(10:15);
+        XX(10:15)= 0;
         taua= taua0;
         tauw= tauw0;
     end
         
     % Increase time count
-    timeSim= T_IMU(k) - 0.75;
-%     timeSim= timeSim + dT_IMU;
+    timeSim= T_IMU(k) - 1.98; %0.75
     timeSum= timeSum + dT_IMU;
     timeSumVirt_Z= timeSumVirt_Z + dT_IMU;
     timeSumVirt_Y= timeSumVirt_Y + dT_IMU;
     
     % ------------- IMU -------------
-    IMU_update( u(:,k), g_N, taua, tauw, dT_IMU );
+    IMU_update( u(:,k), w_IE, g_N, taua, tauw, dT_IMU );
     PX(1:15,1:15)= Phi*PX(1:15,1:15)*Phi' + D_bar; 
     % -------------------------------
     
@@ -113,7 +114,7 @@ for k= 1:N_IMU-1
     
     % ------------- LIDAR -------------
     if (timeSim + dT_IMU) > timeLIDAR && SWITCH_LIDAR_UPDATE
-        epochLIDAR= T_LIDAR(k_LIDAR,1);
+        epochLIDAR= T_LIDAR(k_LIDAR,1); % T_LIDAR contains both the epoch number and the time
         
         if k > numEpochStatic + 1500
             % Read the lidar features
@@ -239,38 +240,47 @@ figure; hold on; title('Standard Deviations');
 
 subplot(3,3,1); hold on; grid on;
 plot(update_time, SD(1,:),'b-','linewidth',2);
+xlim([0,update_time(end)]);
 ylabel('x [m]');
 
 subplot(3,3,2); hold on; grid on;
 plot(update_time, SD(2,:),'r-','linewidth',2);
+xlim([0,update_time(end)]);
 ylabel('y [m]');
 
 subplot(3,3,3); hold on; grid on;
 plot(update_time, SD(3,:),'g-','linewidth',2);
+xlim([0,update_time(end)]);
 ylabel('z [m]');
 
 subplot(3,3,4); hold on; grid on;
 plot(update_time, SD(4,:),'b-','linewidth',2);
+xlim([0,update_time(end)]);
 ylabel('v_x [m/s]');
 
 subplot(3,3,5); hold on; grid on;
 plot(update_time, SD(5,:),'r-','linewidth',2);
+xlim([0,update_time(end)]);
 ylabel('v_y [m/s]');
 
 subplot(3,3,6); hold on; grid on;
 plot(update_time, SD(6,:),'g-','linewidth',2);
+xlim([0,update_time(end)]);
 ylabel('v_z [m/s]');
 
 subplot(3,3,7); hold on; grid on;
 plot(update_time, rad2deg(SD(7,:)),'b-','linewidth',2);
+xlim([0,update_time(end)]);
 ylabel('\phi [deg]'); xlabel('Time [s]');
 
 subplot(3,3,8); hold on; grid on;
 plot(update_time, rad2deg(SD(8,:)),'r-','linewidth',2);
+xlim([0,update_time(end)]);
 ylabel('\theta [deg]'); xlabel('Time [s]');
 
 subplot(3,3,9); hold on; grid on;
 plot(update_time, rad2deg(SD(9,:)),'g-','linewidth',2);
+xlim([0,update_time(end)]);
 ylabel('\psi [deg]'); xlabel('Time [s]');
 
 % % Plot SD -- Biases
@@ -278,26 +288,32 @@ ylabel('\psi [deg]'); xlabel('Time [s]');
 % 
 % subplot(2,3,1); hold on; grid on;
 % plot(update_time, SD(10,:),'b-','linewidth',2);
+% xlim([0,update_time(end)]);
 % ylabel('a_x');
 % 
 % subplot(2,3,2); hold on; grid on;
 % plot(update_time, SD(11,:),'r-','linewidth',2);
+% xlim([0,update_time(end)]);
 % ylabel('a_y');
 % 
 % subplot(2,3,3); hold on; grid on;
 % plot(update_time, SD(12,:),'g-','linewidth',2);
+% xlim([0,update_time(end)]);
 % ylabel('a_z');
 % 
 % subplot(2,3,4); hold on; grid on;
 % plot(update_time, SD(13,:),'b--','linewidth',2);
+% xlim([0,update_time(end)]);
 % ylabel('w_x'); xlabel('Time [s]')
 % 
 % subplot(2,3,5); hold on; grid on;
 % plot(update_time, SD(14,:),'r--','linewidth',2);
+% xlim([0,update_time(end)]);
 % ylabel('w_y'); xlabel('Time [s]')
 % 
 % subplot(2,3,6); hold on; grid on;
 % plot(update_time, SD(15,:),'g--','linewidth',2);
+% xlim([0,update_time(end)]);
 % ylabel('w_z'); xlabel('Time [s]')
 
 

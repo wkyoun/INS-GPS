@@ -9,7 +9,8 @@ sigPx sigPy sigPz: the positions' standard deviations(m) in cartesian coordinate
 sigVx sigVy sigVz: the velocities' standard deviations(m/s) in cartesian coordinates using ECEF frame.
 
 The organization of the IMU data is as follows:
-Year Month Day Number_of_Seconds_from_the_begining_of_the_test_day GYRO_X GYRO_Y GYRO_Z GyroSts ACC_X ACC_Y ACC_Z AccSts INC_X INC_Y INC_Z IncSts
+Year Month Day Number_of_Seconds_from_the_begining_of_the_test_day 
+GYRO_X GYRO_Y GYRO_Z GyroSts ACC_X ACC_Y ACC_Z AccSts INC_X INC_Y INC_Z IncSts
 
 where:-
 GYRO_X,GYRO_Y,GYRO_Z: Gyroscopes' readings(deg/s) in cartestian coordinates using Body frame.

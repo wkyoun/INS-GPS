@@ -1,5 +1,5 @@
 
-function T_LIDAR= dataReadLIDARtime(fileName,timeInit)
+function T_LIDAR= dataReadLIDARtime(fileName, timeInitRef)
 
 load(fileName); % loads the variable "T_LIDAR"
 
@@ -12,7 +12,7 @@ diff_T= [diff_T; mean(diff_T)];
 T_LIDAR(:,2)= T_LIDAR(:,2) + diff_T;
 
 % Use the GPS first reading time as reference
-T_LIDAR(:,2)= T_LIDAR(:,2) - timeInit;
+T_LIDAR(:,2)= T_LIDAR(:,2) - timeInitRef;
 
 % If some of the initial times are negative (prior to first GPS reading),
 % eliminate them

@@ -1,16 +1,16 @@
 
 global DATA XX PX
 
-% fileIMU= strcat('../DATA/DATA_COMPLETE/20180426/Guillermo/IMU/IMU.mat');
-% fileGPS= strcat('../DATA/DATA_COMPLETE/20180426/Guillermo/GPS/GPS.mat');
 
-% fileIMU= strcat('../DATA/DATA_COMPLETE/20180419/Smooth_turn/IMU/IMU.mat');
-fileIMU= strcat('../DATA/DATA_COMPLETE/20180419/Smooth_turn/IMU/20180419_1.txt');
-fileGPS= strcat('../DATA/DATA_COMPLETE/20180419/Smooth_turn/GPS/GPS.mat');
-fileLIDAR= strcat('../DATA/DATA_COMPLETE/20180419/Smooth_turn/LIDAR/');
+% fileIMU= strcat('../DATA/DATA_COMPLETE/20180419/Smooth_turn/IMU/20180419_1.txt');
+% fileGPS= strcat('../DATA/DATA_COMPLETE/20180419/Smooth_turn/GPS/GPS.mat');
+% fileLIDAR= strcat('../DATA/DATA_COMPLETE/20180419/Smooth_turn/LIDAR/');
 
-% fileIMU= strcat('../DATA/DATA_COMPLETE/20180419/Sharp_turn/IMU/IMU.mat');
-% fileGPS= strcat('../DATA/DATA_COMPLETE/20180419/Sharp_turn/GPS/GPS.mat');
+% fileIMU= strcat('../DATA/DATA_COMPLETE/20180612/IMU/20180612_1.txt');
+fileIMU= strcat('../DATA/DATA_COMPLETE/20180612/IMU/IMU2.mat');
+fileGPS= strcat('../DATA/DATA_COMPLETE/20180612/GPS/GPS2.mat');
+fileLIDAR= strcat('../DATA/DATA_COMPLETE/20180612/LIDAR/');
+
 
 % --------------- Initial biases ---------------
 load('../calibration/calibration.mat');
@@ -22,12 +22,13 @@ invC= [invC, zeros(3); zeros(3), eye(3)];
 SWITCH_CALIBRATION= 1; % initial calibration to obtain moving biases
 SWITCH_VIRT_UPDATE_Z= 0; % virtual update for the z-vel in the body frame
 SWITCH_VIRT_UPDATE_Y= 0; % virtual update for the y-vel in the body frame
-SWITCH_YAW_UPDATE= 1;
+SWITCH_YAW_UPDATE= 0;
 SWITCH_GPS_UPDATE= 1; % update of the GPS
-SWITCH_GPS_VEL_UPDATE= 1; % update of the GPS
-SWITCH_LIDAR_UPDATE= 1;
+SWITCH_GPS_VEL_UPDATE= 0; % update of the GPS
+SWITCH_LIDAR_UPDATE= 0;
 SWITCH_REMOVE_FAR_FEATURES= 1;
 % --------------------------------------------------
+
 
 % --------------- Parameters ---------------
 dT_IMU= 1/125; % IMU sampling time
@@ -66,11 +67,12 @@ multFactorVelGPS= 20;  % multiplicative factor for the GPS velocity SD
 % -------------------------------------------
 
 % ---------------- Read data ----------------
-[T_GPS,z_GPS,R_GPS,R_NE,timeInit]= dataReadGPS(fileGPS,numEpochStatic*dT_IMU);
+% [T_IMU,u,iu]= DataReadIMU(fileIMU, timeInit);
+[T_IMU,u,iu,timeInitRef]= DataReadIMUMatFile(fileIMU);
+[T_GPS,z_GPS,R_GPS,R_NE]= dataReadGPS(fileGPS, numEpochStatic*dT_IMU, timeInitRef);
 R_GPS(1:3,:)= R_GPS(1:3,:)*(multFactorPoseGPS^2); %%%%%%%%%%%%%%%%%%%%%%%%%%%%% CAREFUL
 R_GPS(4:6,:)= R_GPS(4:6,:)*(multFactorVelGPS^2);  %%%%%%%%%%%%%%%%%%%%%%%%%%%%% CAREFUL
-[T_IMU,u,iu]= DataReadIMU(fileIMU, timeInit);    
-T_LIDAR= dataReadLIDARtime(strcat(fileLIDAR,'T_LIDAR.mat'), timeInit);
+T_LIDAR= dataReadLIDARtime(strcat(fileLIDAR,'T_LIDAR.mat'), timeInitRef);
 % -------------------------------------------
 
 
@@ -86,13 +88,13 @@ R_virt_Z= sig_virt_vz.^2;
 R_virt_Y= sig_virt_vy.^2;
 R_lidar= diag( [sig_lidar, sig_lidar] ).^2;
 R_yaw_fn= @(v) sig_yaw_fn(v)^2; 
-T_NN= 4.5; %chi2inv(1-alpha_NN,2);
+T_NN= chi2inv(1-alpha_NN,2);
 xPlot= [-0.3; 0; -0.3];
 yPlot= [0.1; 0; -0.1];
 zPlot= [0; 0; 0];
 xyz_B= [xPlot, yPlot, zPlot]';
 R_minLM= sig_minLM.^2;
-
+w_IE= 7.292115 * 1e-5; % [rad/s] eq (2.2) in book
 
 % IMU -- white noise specs
 VRW= 0.07 *multFactorAccIMU;  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  CAREFUL
@@ -113,7 +115,7 @@ S= blkdiag(Sv, Sn);
 S_cal= blkdiag(Sv_cal, Sn);
 
 % Number of readings
-N_IMU= size(u,2);% N_IMU= 15000; %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  CAREFUL
+N_IMU= size(u,2); N_IMU= 19000; %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  CAREFUL
 N_GPS= size(z_GPS,2);
 
 % Initial rotation to get: x=foward & z=down
@@ -151,7 +153,7 @@ PX(13:15,13:15)= diag( [sig_bw,sig_bw,sig_bw] ).^2;
 XX(7)= phi0;
 XX(8)= theta0;
 XX(9)= yaw0;
-appearances= zeros(1,200);
+appearances= zeros(1,400);
 
 % Initialize loop variables
 timeSim= 0;

@@ -1,9 +1,9 @@
 
-function [T,z,R,R_NE,timeInit]= dataReadGPS(string,timeStatic)
 
-numEpochStaticGPS= ceil(timeStatic);
+function [T,z,R,R_NE]= dataReadGPS(string, timeStatic, timeInitRef)
 
 load(string);
+
 
 T= data(:,4);
 posX= data(:,5);
@@ -19,15 +19,17 @@ sigVelX= data(:,14);
 sigVelY= data(:,15);
 sigVelZ= data(:,16);
 
-% Save the initial time as reference for other sensors
-timeInit= T(1);
 
 % Make time start at zero
-T= T - T(1);
+T= T - timeInitRef;
 
 % create variables
 z= [posX, posY, posZ, velX, velY, velZ]';
 R= ([sigPosX, sigPosY, sigPosZ, sigVelX, sigVelY, sigVelZ].^2)';
+
+
+% Number of GPS epochs while the cart is static since we start logging GPS
+numEpochStaticGPS= ceil(timeStatic - T(1));
 
 % Use initial position as reference
 muX= mean(posX(1:numEpochStaticGPS));
